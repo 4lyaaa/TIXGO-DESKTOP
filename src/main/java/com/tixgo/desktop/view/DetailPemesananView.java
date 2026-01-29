@@ -20,26 +20,23 @@ import javafx.scene.layout.VBox;
 public class DetailPemesananView extends VBox {
 
     public DetailPemesananView(Runnable onBack, Runnable onConfirm) {
-        // --- Konfigurasi Background Utama ---
+        // --- Konfigurasi Layout ---
         this.setSpacing(20);
         this.setPadding(new Insets(20));
         this.setAlignment(Pos.CENTER);
         this.setStyle("-fx-background-color: #f0f8ff;");
 
-        // --- Container Utama (Biru) ---
         VBox mainBox = new VBox(20);
         mainBox.setPadding(new Insets(25));
         mainBox.setStyle("-fx-background-color: #5dade2; -fx-background-radius: 20;");
         mainBox.setAlignment(Pos.CENTER);
-        
-        // KUNCI RESPONSIF: Mengikuti 90% lebar jendela, dengan lebar ideal 500px
         mainBox.maxWidthProperty().bind(this.widthProperty().multiply(0.9));
         mainBox.setPrefWidth(500);
 
         Label title = new Label("Detail Pemesanan Tiket");
         title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: white;");
         
-        // --- Bagian Form (Kontak Pemesan) ---
+        // --- Form Kontak ---
         VBox formBox = new VBox(10);
         formBox.setPadding(new Insets(15));
         formBox.setStyle("-fx-background-color: rgba(255,255,255,0.2); -fx-background-radius: 15;");
@@ -58,7 +55,7 @@ public class DetailPemesananView extends VBox {
 
         formBox.getChildren().addAll(lblKontak, txtNama, txtEmail, txtHP);
 
-        // --- Bagian Metode Pembayaran ---
+        // --- Metode Pembayaran ---
         Label lblBayarHeader = new Label("Metode Pembayaran");
         lblBayarHeader.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
 
@@ -72,7 +69,7 @@ public class DetailPemesananView extends VBox {
 
         RadioButton rbEWallet = new RadioButton("E-Wallet");
         rbEWallet.setToggleGroup(group);
-        rbEWallet.setSelected(true); // Default terpilih
+        rbEWallet.setSelected(true);
         rbEWallet.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
 
         RadioButton rbCreditCard = new RadioButton("Kartu Kredit");
@@ -86,47 +83,56 @@ public class DetailPemesananView extends VBox {
         actions.setAlignment(Pos.CENTER);
         
         Button btnKembali = new Button("Kembali");
-        btnKembali.setStyle("-fx-background-radius: 5;");
         btnKembali.setOnAction(e -> onBack.run()); 
 
         Button btnBayar = new Button("Konfirmasi & Bayar");
         btnBayar.setStyle("-fx-background-color: #1a5276; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;");
         btnBayar.setCursor(javafx.scene.Cursor.HAND);
 
-        // LOGIKA DATABASE & NAVIGASI
+        // --- LOGIKA DATABASE GABUNGAN ---
         btnBayar.setOnAction(e -> {
             try (Connection conn = Config.connect()) {
-                String sql = "INSERT INTO pemesanan (nama, email, hp, metode_bayar, kereta) VALUES (?, ?, ?, ?, ?)";
+                String sql = "INSERT INTO pemesanan (nama_pemesan, email, hp, stasiun_asal, " +
+                             "stasiun_tujuan, tanggal_berangkat, kelas_kereta, total_bayar, metode_bayar) " +
+                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 
+                // 1-3: Data Form
                 stmt.setString(1, txtNama.getText());
                 stmt.setString(2, txtEmail.getText());
                 stmt.setString(3, txtHP.getText());
                 
-                // Ambil teks dari RadioButton yang aktif
+                // 4-8: Data Perjalanan (Dummy untuk saat ini)
+                stmt.setString(4, "Jakarta"); 
+                stmt.setString(5, "Surabaya");
+                stmt.setDate(6, java.sql.Date.valueOf(java.time.LocalDate.now())); 
+                stmt.setString(7, "Eksekutif");
+                stmt.setDouble(8, 150000.0);
+                
+                // 9: Metode Bayar
                 RadioButton selected = (RadioButton) group.getSelectedToggle();
-                stmt.setString(4, selected.getText());
+                stmt.setString(9, selected != null ? selected.getText() : "E-Wallet");
                 
-                stmt.setString(5, "EXPRESS 999"); // Dummy data kereta
-                
-                stmt.executeUpdate(); // Eksekusi simpan ke PostgreSQL
-                
-                // NAVIGASI: Pindah ke halaman bukti hanya setelah database berhasil diupdate
-                onConfirm.run(); 
+                // Eksekusi dan Navigasi
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected > 0) {
+                    System.out.println("Simpan Berhasil!");
+                    onConfirm.run(); // PINDAH HALAMAN KE BUKTI PEMESANAN
+                }
                 
             } catch (SQLException ex) {
                 ex.printStackTrace();
-                // Tampilkan pesan error jika koneksi bermasalah
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Gagal menyimpan ke Database: " + ex.getMessage());
-                alert.show();
-            } catch (Exception ex) {
-                ex.printStackTrace();
+                // Alert ini akan muncul jika ada yang salah (misal: tabel belum dibuat)
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Database Error");
+                alert.setHeaderText("Gagal Simpan ke Riwayat");
+                alert.setContentText(ex.getMessage());
+                alert.showAndWait();
             }
         });
 
         actions.getChildren().addAll(btnKembali, btnBayar);
-
-        // Gabungkan semua komponen ke mainBox
         mainBox.getChildren().addAll(title, formBox, lblBayarHeader, paymentBox, actions);
         this.getChildren().add(mainBox);
     }

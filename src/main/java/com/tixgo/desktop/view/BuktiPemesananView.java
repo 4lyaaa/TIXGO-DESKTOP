@@ -21,7 +21,7 @@ public class BuktiPemesananView extends VBox {
         this.setSpacing(20);
         this.setPadding(new Insets(50));
         this.setAlignment(Pos.CENTER);
-        this.setStyle("-fx-background-color: #5dade2;"); // Background biru sesuai gambar
+        this.setStyle("-fx-background-color: #5dade2;"); 
 
         // --- Card Putih di Tengah ---
         VBox card = new VBox(15);
@@ -30,7 +30,7 @@ public class BuktiPemesananView extends VBox {
         card.setMaxWidth(450);
         card.setAlignment(Pos.CENTER);
 
-        // Header Selamat
+        // Header
         Label icon = new Label("🎉");
         icon.setStyle("-fx-font-size: 30px;");
         
@@ -47,22 +47,25 @@ public class BuktiPemesananView extends VBox {
         details.setAlignment(Pos.CENTER);
         details.setPadding(new Insets(20, 0, 20, 0));
 
-        // Logika Mengambil Data Terakhir dari PostgreSQL
+        // Ambil data terbaru yang baru saja di-insert
         try (Connection conn = Config.connect();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT * FROM pemesanan ORDER BY id DESC LIMIT 1")) {
             
             if (rs.next()) {
-                addDetailRow(details, 0, "Nama Pemesan", rs.getString("nama"));
+                // Sesuai dengan kolom di PostgreSQL
+                addDetailRow(details, 0, "Nama Pemesan", rs.getString("nama_pemesan"));
                 addDetailRow(details, 1, "Email", rs.getString("email"));
                 addDetailRow(details, 2, "No. HP", rs.getString("hp"));
-                addDetailRow(details, 3, "Kereta", rs.getString("kereta"));
-                addDetailRow(details, 4, "Rute", "Surabaya - Bali"); // Data statis/tambahan
-                addDetailRow(details, 5, "Pembayaran", rs.getString("metode_bayar"));
+                addDetailRow(details, 3, "Stasiun Asal", rs.getString("stasiun_asal"));
+                addDetailRow(details, 4, "Stasiun Tujuan", rs.getString("stasiun_tujuan"));
+                addDetailRow(details, 5, "Kelas Kereta", rs.getString("kelas_kereta"));
+                addDetailRow(details, 6, "Metode Bayar", rs.getString("metode_bayar"));
+                addDetailRow(details, 7, "Total Bayar", "Rp " + rs.getDouble("total_bayar"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            Label errorLabel = new Label("Gagal mengambil data pemesanan.");
+            Label errorLabel = new Label("Gagal mengambil data: " + e.getMessage());
             errorLabel.setStyle("-fx-text-fill: red;");
             card.getChildren().add(errorLabel);
         }
@@ -78,7 +81,7 @@ public class BuktiPemesananView extends VBox {
         this.getChildren().add(card);
     }
 
-    // Helper Method untuk membuat baris detail yang rapi
+    // Helper Method untuk baris detail
     private void addDetailRow(GridPane grid, int row, String label, String value) {
         Label lblName = new Label(label);
         lblName.setStyle("-fx-font-weight: bold; -fx-text-fill: #34495e;");

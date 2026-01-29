@@ -39,7 +39,7 @@ public class DesktopApplication extends Application {
         primaryStage.show();
     }
 
-    // --- FITUR BARU: Navigasi ke Landing Page / Dashboard ---
+    // --- Navigasi ke Landing Page / Dashboard ---
     public void showDashboardView() {
         // Mengirimkan referensi ke showJadwalView agar tombol 'Cari' bisa berpindah halaman
         root.getChildren().setAll(new DashboardView(this::showJadwalView));

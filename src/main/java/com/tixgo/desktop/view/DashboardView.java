@@ -8,6 +8,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundImage;
 import javafx.scene.layout.BackgroundPosition;
@@ -21,9 +22,8 @@ import javafx.scene.layout.VBox;
 public class DashboardView extends StackPane {
 
     public DashboardView(Runnable onSearch) {
-        // --- 1. BAGIAN BACKGROUND IMAGE (PERBAIKAN) ---
+        // --- 1. BAGIAN BACKGROUND IMAGE ---
         try {
-            // Menggunakan toExternalForm() agar path file .png dengan spasi terbaca lebih stabil
             String path = getClass().getResource("/images/background_kereta.png").toExternalForm();
             Image bgImg = new Image(path);
             
@@ -36,16 +36,16 @@ public class DashboardView extends StackPane {
             );
             this.setBackground(new Background(bImg));
         } catch (Exception e) {
-            // Fallback jika gambar masih tidak ditemukan
             this.setStyle("-fx-background-color: #34495e;"); 
-            System.err.println("Gagal memuat: Pastikan file 'background kereta.png' ada di src/main/resources/images/");
+            System.err.println("Gagal memuat: Pastikan file 'background_kereta.png' ada di resources/images/");
         }
 
+        // --- 2. LAYOUT UTAMA (SLOGAN & FORM) ---
         HBox mainLayout = new HBox(60);
         mainLayout.setAlignment(Pos.CENTER);
         mainLayout.setPadding(new Insets(40));
 
-        // --- 2. SISI KIRI: SLOGAN ---
+        // SISI KIRI: SLOGAN
         VBox leftBox = new VBox(5);
         leftBox.setAlignment(Pos.CENTER_LEFT);
         
@@ -59,7 +59,7 @@ public class DashboardView extends StackPane {
         
         leftBox.getChildren().addAll(slogan, subSlogan);
 
-        // --- 3. SISI KANAN: CARD FORM ---
+        // SISI KANAN: CARD FORM
         VBox card = new VBox(12);
         card.setPadding(new Insets(30));
         card.setStyle("-fx-background-color: white; -fx-background-radius: 20; " +
@@ -87,7 +87,6 @@ public class DashboardView extends StackPane {
         dpBerangkat.setMaxWidth(Double.MAX_VALUE);
         dpBerangkat.setStyle(inputStyle);
 
-        // --- 4. TOMBOL CARI ---
         Button btnCari = new Button("Cari Tiket");
         String normalStyle = "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 16px; " +
                              "-fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12 0; -fx-cursor: hand;";
@@ -96,10 +95,8 @@ public class DashboardView extends StackPane {
         
         btnCari.setStyle(normalStyle);
         btnCari.setMaxWidth(Double.MAX_VALUE);
-        
         btnCari.setOnMouseEntered(e -> btnCari.setStyle(hoverStyle));
         btnCari.setOnMouseExited(e -> btnCari.setStyle(normalStyle));
-        
         btnCari.setOnAction(e -> onSearch.run());
 
         card.getChildren().addAll(
@@ -112,7 +109,30 @@ public class DashboardView extends StackPane {
         );
 
         mainLayout.getChildren().addAll(leftBox, card);
+        
+        // Tambahkan layout utama ke StackPane
         this.getChildren().add(mainLayout);
+
+        // --- 5. LOGO TIX-GO DI POJOK KIRI ATAS ---
+        try {
+            String logoPath = getClass().getResource("/images/logo_tixgo.png").toExternalForm();
+            Image imgLogo = new Image(logoPath);
+            ImageView logoView = new ImageView(imgLogo);
+            
+            logoView.setFitWidth(120);
+            logoView.setPreserveRatio(true);
+            
+            HBox logoWrapper = new HBox(logoView);
+            logoWrapper.setPadding(new Insets(25)); 
+            logoWrapper.setAlignment(Pos.TOP_LEFT);
+            logoWrapper.setPickOnBounds(false); 
+            
+            // Menumpuk logo di atas mainLayout
+            this.getChildren().add(logoWrapper);
+            
+        } catch (Exception e) {
+            System.err.println("Logo tidak ditemukan: Pastikan file 'logo_tixgo.jpg' ada di resources/images/");
+        }
     }
 
     private Label createLabel(String text) {
